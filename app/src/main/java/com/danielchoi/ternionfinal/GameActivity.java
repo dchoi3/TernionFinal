@@ -222,6 +222,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         playerGrid.setLockGrid(true);
         if (enemyGrid == null) enemyGrid = new GridBoard(this, R.id.enemyGrid, false, cellCount);
         else enemyGrid.showGrid();
+        playerGrid.hideGrid();
     }
 
     /**
