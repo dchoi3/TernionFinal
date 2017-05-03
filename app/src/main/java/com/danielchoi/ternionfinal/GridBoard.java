@@ -36,7 +36,7 @@ public class GridBoard extends Activity implements OnTouchListener {
     private boolean player, hit, lockGrid;
     private Ship ships[], selectedShip;
     private RelativeLayout gridContainer;
-    private ArrayList<Point> occupiedCells;
+    private ArrayList<Point> occupiedCells, playerAttacks;
     private int boardID, sizeOfCell, margin, gridID, soundID;
     private enum MotionStatus {DOWN, MOVE, UP}
     private MotionStatus status;
@@ -51,6 +51,7 @@ public class GridBoard extends Activity implements OnTouchListener {
     SoundPool soundPool;
     private Set<Integer> soundsLoaded;
     private boolean AIisAttacking;
+    private Point playerAttack;
 
     // Row/Col to be used for playerAttack().
     // Initialized to -1 since first cell on grid is 0,0
@@ -81,6 +82,7 @@ public class GridBoard extends Activity implements OnTouchListener {
         linBoardGame.setOnTouchListener(this);
         sizeOfCell = Math.round(ScreenWidth() / (maxN + (1)));
         occupiedCells = new ArrayList<>();
+        playerAttacks = new ArrayList<>();
         hit = false;
         gridID = R.drawable.grid;
         if (!player ) lockGrid = true;
@@ -239,14 +241,16 @@ public class GridBoard extends Activity implements OnTouchListener {
      * selections in an array. Compares the user's selection to the occupied grid array. Handles
      * user hits/misses visuals accordingly.
      *
-     * @param r The row's cell the player is targeting.
-     * @param c the column's cell the player is targeting.
+     * @param r The row's cell the player has fired on.
+     * @param c the column's cell the player has fired on.
      */
     public void playerAttack(int r, int c) {
         // Get view coords player clicked.
         Log.i("player's target", "" + r + ", " + c);
 
-        // TODO ignore touch if player has previously committed a fire on that cell
+        // Save player attacks; to be compared to future attacks.
+        playerAttack = new Point(r, c);
+        playerAttacks.add(playerAttack);
 
         // Hit is set when coords are passed to checkIfOccupied via findViewHelper.
         // i.e. By the time player clicks the "Fire" button to call this method,
@@ -264,8 +268,6 @@ public class GridBoard extends Activity implements OnTouchListener {
         newTarget = null;
 
         // TODO transition back to enemy grid
-        // Save player selections
-        Point playerAttacks = new Point(r, c);
 
         // Reset player's selection.
         touchRow = -1;
@@ -318,6 +320,15 @@ public class GridBoard extends Activity implements OnTouchListener {
     private void checkIfOccupied(int row, int col) {
         if (status == MotionStatus.DOWN || AIisAttacking) {
 
+//            if (player && playerAttacks != null) {
+//                // Ignore touch if player has previously committed an attack on that cell.
+//                for (int i = 0; i < playerAttacks.size(); i++) {
+//                    if (playerAttacks.get(i).equals(row,col)) {
+//                        Log.i("for", "You Hit this Previously!");
+//                    }
+//                }
+//            }
+
             for (int i = 0; i < occupiedCells.size(); i++) {
                 if (occupiedCells.get(i).x == row && occupiedCells.get(i).y == col) {
                     Point p = new Point(row, col);
@@ -331,7 +342,6 @@ public class GridBoard extends Activity implements OnTouchListener {
                 setHit(false);
                 Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
             }
-
         } else if (status == MotionStatus.MOVE) {//MotionStatus.MOVE
             if (selectedShip != null) {//Need to make sure none of the current ship parts will overlap another.
                 int rowHolder = selectedShip.getHeadCoordinatePoint().x;
