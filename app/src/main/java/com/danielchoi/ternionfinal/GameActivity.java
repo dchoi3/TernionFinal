@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Typeface;
 import android.graphics.drawable.TransitionDrawable;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
@@ -22,18 +23,17 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
-import java.util.Timer;
 
 public class GameActivity extends AppCompatActivity implements View.OnClickListener, PopupMenu.OnMenuItemClickListener {
 
     public Vibrator vb;
     public static final int activityRef = 2000;
-    private int score = 0, count = 0, soundID[], cellCount;
+    private int score = 0, soundID[], cellCount;
     private GridBoard playerGrid, enemyGrid;
     private Set<Integer> soundsLoaded;
     private TransitionDrawable transition;
@@ -41,6 +41,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
     public GAMEPHASE gamephase;
     View layout, shipName;
     ImageView battleButton, alertView, fireButton;
+    TextView scoreTV;
     InvasionThread invasion;
     SoundPool soundPool;
 
@@ -149,6 +150,11 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         fireButton = (ImageView) findViewById(R.id.fireIB);
         layout = findViewById(R.id.activity_game);
         shipName = findViewById(R.id.shipTV);
+        scoreTV = (TextView) findViewById(R.id.scoreTV);
+        scoreTV.setVisibility(View.GONE);
+        scoreTV.setTypeface(Typeface.createFromAsset(getAssets(),  "fonts/britanicbold.TTF"));
+        ((TextView) findViewById(R.id.shipTV)).setTypeface(Typeface.createFromAsset(getAssets(),  "fonts/britanicbold.TTF"));
+
         cellCount = 8;
     }
 
@@ -200,6 +206,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         fireButton.setVisibility(View.GONE);
         battleButton.setOnClickListener(this);
         fireButton.setOnClickListener(this);
+        scoreTV.setVisibility(View.VISIBLE);
         if (playerGrid == null) playerGrid = new GridBoard(this, R.id.playerGrid, true, cellCount);
         setDynamicButtonSize();
     }
@@ -211,6 +218,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         battleButton.setVisibility(View.GONE);
         shipName.setVisibility(View.GONE);
         if (playerGrid != null) playerGrid.hideGrid();
+
     }
 
     /**
@@ -229,7 +237,10 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
      */
     private void enemyPhase() {
         gamephase = GAMEPHASE.ENEMY_PHASE;
+        enemyGrid.hideGrid();
+        fireButton.setVisibility(View.GONE);
         battleButton.setVisibility(View.VISIBLE);
+        playerGrid.showGrid();
         playerGrid.enemyAttack();
     }
 
@@ -244,13 +255,12 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
 
 
         } else if (view.getId() == R.id.fireIB) {
-            if (enemyGrid.touchRow != -1 && enemyGrid.touchCol != -1) {
-                enemyPhase();
-                transition.reverseTransition(750);
-                fireButton.setVisibility(View.GONE);
+            if (enemyGrid.newTarget != null) {
                 enemyGrid.playerAttack(enemyGrid.touchRow, enemyGrid.touchCol);
-                enemyGrid.hideGrid();
-                playerGrid.showGrid();
+                if(enemyGrid.getHit()) score = score + 200;
+                transition.reverseTransition(750);
+                scoreTV.setText("" + score);
+                enemyPhase();
             } else {
                 Toast.makeText(this, "No Point Selected.", Toast.LENGTH_SHORT).show();
             }
@@ -324,6 +334,12 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         lp2.height = height;
         lp2.width = width;
         ib2.setLayoutParams(lp2);
+
+        TextView tv = (TextView) findViewById(R.id.scoreTV);
+        RelativeLayout.LayoutParams tvLp = (RelativeLayout.LayoutParams) tv.getLayoutParams();
+        tvLp.height = height;
+        tvLp.width = width;
+        tv.setLayoutParams(tvLp);
     }
 
     /**
@@ -349,7 +365,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         if (item.getItemId() == R.id.highScore) {
             gamephase = GAMEPHASE.INTRO_PHASE; //Temp to reset game. It should be in the GAMEOVER_PHASE
             if (playerGrid != null) {
-                if (playerGrid.getHit()) score = score + 2000;
+
                 Intent scoreIntent = new Intent(getApplicationContext(), ScoreActivity.class);
                 scoreIntent.putExtra("score", score);
                 scoreIntent.putExtra("calling-Activity", activityRef);
@@ -363,8 +379,6 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
             gamephase = GAMEPHASE.INTRO_PHASE; //Temp to reset game. It should be in the GAMEOVER_PHASE
             onBackPressed();
 
-        } else if (item.getItemId() == R.id.actionAI) {
-            //To call AI attack
         }
         return false;
     }

@@ -47,7 +47,8 @@ public class GridBoard extends Activity implements OnTouchListener {
     private ImageView[][] ivCell = new ImageView[maxN][maxN];
     private TextView shipTV;
     private View lastView, newView;
-    private ImageView lastTarget, newTarget;
+    private ImageView lastTarget;
+    public ImageView newTarget;
     private Vector<String> aiAttacks = new Vector<>(); // Stores A.I. attacks in Vector to track previous hits
     SoundPool soundPool;
     private Set<Integer> soundsLoaded;
@@ -238,12 +239,14 @@ public class GridBoard extends Activity implements OnTouchListener {
                 ivCell[x][y].setBackgroundResource(gridID);
             }
         }
+
         for (Ship s : ships) {
             for (int i = 0; i < s.getShipSize(); i++) {
-                ivCell[s.getBodyLocationPoints()[i].x][s.getBodyLocationPoints()[i].y].setBackgroundResource(s.getBodyResources()[i]);
+                if(player)ivCell[s.getBodyLocationPoints()[i].x][s.getBodyLocationPoints()[i].y].setBackgroundResource(s.getBodyResources()[i]);
                 updateOccupiedCells(s.getBodyLocationPoints());
             }
         }
+
     }
 
     /**
@@ -421,15 +424,12 @@ public class GridBoard extends Activity implements OnTouchListener {
                 if (occupiedCells.get(i).x == row && occupiedCells.get(i).y == col) {
                     Point p = new Point(row, col);
                     selectedShip = findWhichShip(p); //Touching View Updated
-                    setHit(true);
                     Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
-                    break; // Exit loop when match found.
+                    setHit(true);
+                    break;
                 }
             }
-            if (selectedShip == null) {
-                setHit(false);
-                Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
-            }
+            if (selectedShip == null) setHit(false);
 
 
 
@@ -472,14 +472,16 @@ public class GridBoard extends Activity implements OnTouchListener {
         int myRow = 0, myCol = 0;
         boolean selectionFound = false;
         String aiSelectedHit = "Empty";
-        while (selectionFound == true || counter < aiAttacks.size()) {
+        Random newRow, newCol;
+
+        while (selectionFound || counter < aiAttacks.size()) {
             selectionFound = false;
             // Select random row and col
-            Random newRow = new Random();
+            newRow = new Random();
             myRow = newRow.nextInt(maxN);
-            Random newCol = new Random();
+            newCol = new Random();
             myCol = newCol.nextInt(maxN);
-            Log.i("_-_-_-_", "aiRandomHit call " + counter);
+
             aiSelectedHit = myRow + ", " + myCol;
 
             while (counter < aiAttacks.size()) {
@@ -493,11 +495,6 @@ public class GridBoard extends Activity implements OnTouchListener {
             }
         }
         aiAttacks.add(aiSelectedHit);
-
-        // TODO I think this is just for testing?
-//        for (int i = 0; i < aiAttacks.size(); i++) {
-//            Log.i("AI hits coordinate: ", aiAttacks.get(i));
-//        }
 
         checkIfOccupied(myRow, myCol);
 
