@@ -34,7 +34,7 @@ public class GridBoard extends Activity implements OnTouchListener {
     private Point point;
     private Context context;
     final static int maxN = 8;
-    private boolean player, hit, lockGrid = false;
+    private boolean moved, player, hit, lockGrid;
     private Ship ships[], selectedShip;
     private RelativeLayout gridContainer;
     private ArrayList<Point> occupiedCells;
@@ -51,7 +51,7 @@ public class GridBoard extends Activity implements OnTouchListener {
     private ImageView[][] ivCell = new ImageView[maxN][maxN];
     private TextView shipTV;
     private View lastView, newView;
-    private boolean AIisAttacking = false;
+    private boolean isNewCell = false;
     private Vector<String> aiAttacks = new Vector(); // Stores A.I. attacks in Vector to track previous hits
     SoundPool soundPool;
     private Set<Integer> soundsLoaded;
@@ -297,27 +297,19 @@ public class GridBoard extends Activity implements OnTouchListener {
         touchCol = col;
         touchRow = row;
 
-        // A.I. Attacking Check Cells
-        if (AIisAttacking) {
-            Log.i("Attack A.I.", "Checking Cell");
-            AIisAttacking = false;
-        }
-
         if (status == MotionStatus.DOWN) {
             for (int i = 0; i < occupiedCells.size(); i++) {
                 if (occupiedCells.get(i).x == row && occupiedCells.get(i).y == col) {
-                    Log.i("OCCUPIED", "TRUE " + row + ", " + col);
                     Point p = new Point(row, col);
                     selectedShip = findWhichShip(p); //Touching View Updated
                     setHit(true);
-                    Log.i("true getHit", "" + getHit());
+                    Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
                     break; // Exit loop when match found.
                 }
             }
             if (selectedShip == null) {
                 setHit(false);
-                Log.i("OCCUPIED", "FALSE " + row + ", " + col);
-                Log.i("false getHit", "" + getHit());
+                Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
             }
 
             // TODO Set target image in cell that the user clicks.
@@ -356,6 +348,8 @@ public class GridBoard extends Activity implements OnTouchListener {
      * it has not then it performs the attack and adds it to its vector of previous attacks.
      */
     public void enemyAttack() {
+        Log.i("enemyAttack", "Begins");
+
         // Loop until A.I. selects a cell it has not chosen before.
         int counter = 0;
         int myRow = 0, myCol = 0;
@@ -382,13 +376,23 @@ public class GridBoard extends Activity implements OnTouchListener {
             }
         }
         aiAttacks.add(aiSelectedHit);
-        for (int i = 0; i < aiAttacks.size(); i++) {
-            Log.i("AI hits coordinate: ", aiAttacks.get(i));
+
+        // TODO I think this is just for testing?
+//        for (int i = 0; i < aiAttacks.size(); i++) {
+//            Log.i("AI hits coordinate: ", aiAttacks.get(i));
+//        }
+
+        checkIfOccupied(myRow, myCol);
+
+        if (getHit()) {
+            ivCell[myRow][myCol].setImageResource(R.drawable.mushroom);
+            Log.i("AI getHit", "" + getHit() + ", (" + myRow + ", " + myCol + ")");
+        } else {
+            ivCell[myRow][myCol].setImageResource(R.drawable.crater);
+            Log.i("AI getHit", "" + getHit() + ", (" + myRow + ", " + myCol + ")");
         }
-        if (AIisAttacking) {
-            checkIfOccupied(myRow, myCol);
-        }
-        Log.i("Enemy AI is Attacking", "---------");
+
+        Log.i("enemyAttack", "Ends");
     }
 
     /**
