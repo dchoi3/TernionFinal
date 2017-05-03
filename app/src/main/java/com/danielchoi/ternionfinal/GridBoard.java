@@ -202,9 +202,7 @@ public class GridBoard extends Activity implements OnTouchListener {
                         }else{
                             newTarget.setBackgroundResource(R.drawable.target);
                         }
-
                     }
-
                     break;
                 case MotionEvent.ACTION_MOVE:
                     status = MotionStatus.MOVE;
@@ -221,13 +219,11 @@ public class GridBoard extends Activity implements OnTouchListener {
                         }
                     }else if (!player){
                         if(newTarget != null) lastTarget = newTarget;
-
                         findViewHelper(touchX, touchY);
                         if(newTarget != null){
                             lastTarget.setBackgroundResource(gridID);
                             newTarget.setBackgroundResource(R.drawable.target);
                         }
-
                     }
                     break;
                 case MotionEvent.ACTION_UP:
@@ -250,9 +246,6 @@ public class GridBoard extends Activity implements OnTouchListener {
         // Get view coords player clicked.
         Log.i("player's target", "" + r + ", " + c);
 
-        // store committed attack coordinates in array list of Points
-        Point playerAttacks = new Point(r, c);
-
         // TODO ignore touch if player has previously committed a fire on that cell
 
         // Hit is set when coords are passed to checkIfOccupied via findViewHelper.
@@ -272,6 +265,7 @@ public class GridBoard extends Activity implements OnTouchListener {
 
         // TODO transition back to enemy grid
         // Save player selections
+        Point playerAttacks = new Point(r, c);
 
         // Reset player's selection.
         touchRow = -1;
@@ -322,10 +316,6 @@ public class GridBoard extends Activity implements OnTouchListener {
      * After this method runs, it should traverse back into the ONTOUCH events.
      */
     private void checkIfOccupied(int row, int col) {
-        // Update user selected coords each time a view on the grid is found.
-        // To be used for playerAttack().
-        // This seems to be the only place I can put this without causing app to crash.
-
         if (status == MotionStatus.DOWN || AIisAttacking) {
 
             for (int i = 0; i < occupiedCells.size(); i++) {
@@ -341,8 +331,6 @@ public class GridBoard extends Activity implements OnTouchListener {
                 setHit(false);
                 Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
             }
-
-
 
         } else if (status == MotionStatus.MOVE) {//MotionStatus.MOVE
             if (selectedShip != null) {//Need to make sure none of the current ship parts will overlap another.
