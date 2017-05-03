@@ -31,28 +31,23 @@ import java.util.Vector;
 public class GridBoard extends Activity implements OnTouchListener {
 
     public Vibrator vb;
-    private Point point;
     private Context context;
     final static int maxN = 8;
-    private boolean moved, player, hit, lockGrid;
+    private boolean player, hit, lockGrid;
     private Ship ships[], selectedShip;
     private RelativeLayout gridContainer;
     private ArrayList<Point> occupiedCells;
     private int boardID, sizeOfCell, margin, gridID, soundID;
-
     private enum MotionStatus {DOWN, MOVE, UP}
-
     private MotionStatus status;
-
     private enum GamePhaseStatus {SETUP, GAMEPHASE}
-
-    private GamePhaseStatus gpStatus;
-    private LinearLayout linBoardGame, linRow, searchRow;
+    private GamePhaseStatus playerGpStatus;
+    private LinearLayout linBoardGame;
     private ImageView[][] ivCell = new ImageView[maxN][maxN];
     private TextView shipTV;
     private View lastView, newView;
-    private boolean isNewCell = false;
-    private Vector<String> aiAttacks = new Vector(); // Stores A.I. attacks in Vector to track previous hits
+    private ImageView lastTarget, newTarget;
+    private Vector<String> aiAttacks = new Vector<>(); // Stores A.I. attacks in Vector to track previous hits
     SoundPool soundPool;
     private Set<Integer> soundsLoaded;
 
@@ -81,7 +76,7 @@ public class GridBoard extends Activity implements OnTouchListener {
         vb = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         linBoardGame = (LinearLayout) ((Activity) context).findViewById(boardID);
         gridContainer = (RelativeLayout) ((Activity) context).findViewById(R.id.gridContainer);
-        shipTV = (TextView) ((Activity) context).findViewById(R.id.textView);
+        shipTV = (TextView) ((Activity) context).findViewById(R.id.shipTV);
         linBoardGame.setOnTouchListener(this);
         sizeOfCell = Math.round(ScreenWidth() / (maxN + (1)));
         occupiedCells = new ArrayList<>();
@@ -105,6 +100,7 @@ public class GridBoard extends Activity implements OnTouchListener {
 
         LinearLayout.LayoutParams lpRow = new LinearLayout.LayoutParams(sizeOfCell * maxN, sizeOfCell);
         LinearLayout.LayoutParams lpCell = new LinearLayout.LayoutParams(sizeOfCell, sizeOfCell);
+        LinearLayout linRow;
 
         for (int row = 0; row < maxN; row++) {
             linRow = new LinearLayout(context);
@@ -121,6 +117,7 @@ public class GridBoard extends Activity implements OnTouchListener {
      */
     private void createShips() {
         //context,size, headLocation, bodyLocations
+        Point point;
         Ship scout_One, scout_Two, cruiser, carrier, motherShip;
         point = new Point(maxN - 1, 0); //row, cell
         scout_One = new Ship(1, point, maxN, "Scout One", player);
@@ -197,10 +194,20 @@ public class GridBoard extends Activity implements OnTouchListener {
                     selectedShip = null;
                     findViewHelper(touchX, touchY);
                     if (selectedShip != null) {shipTV.setText(selectedShip.getShipName());}
+                    if(lockGrid){ //Means we are done with setup Phase
+                        if(lastTarget != null){
+                            lastTarget.setBackgroundResource(gridID);
+                            newTarget.setBackgroundResource(R.drawable.target);
+                        }else{
+                            newTarget.setBackgroundResource(R.drawable.target);
+                        }
+
+                    }
 
                     break;
                 case MotionEvent.ACTION_MOVE:
                     status = MotionStatus.MOVE;
+
                     if (!lockGrid) {
                         if (newView != null) lastView = newView;
                         findViewHelper(touchX, touchY);
@@ -211,6 +218,15 @@ public class GridBoard extends Activity implements OnTouchListener {
                             occupiedCells.clear();
                             setShips();
                         }
+                    }else{
+                        if(newTarget != null) lastTarget = newTarget;
+
+                        findViewHelper(touchX, touchY);
+                        if(newTarget != null){
+                            lastTarget.setBackgroundResource(gridID);
+                            newTarget.setBackgroundResource(R.drawable.target);
+                        }
+
                     }
                     break;
                 case MotionEvent.ACTION_UP:
@@ -267,6 +283,7 @@ public class GridBoard extends Activity implements OnTouchListener {
     @Nullable
     private void findViewHelper(int x, int y) {
         View searchView;
+        LinearLayout searchRow;
         for (int row = 0; row < maxN; row++) {
             searchRow = (LinearLayout) linBoardGame.getChildAt(row); //Current row it is checking
             if (y > searchRow.getTop() && y < searchRow.getBottom()) {//If the Y coordinates are within the row Check which cell
@@ -274,8 +291,16 @@ public class GridBoard extends Activity implements OnTouchListener {
                     searchView = searchRow.getChildAt(col);    //Current View of the current searchRow
                     if (x > searchView.getLeft() && x < searchView.getRight()) {//If the x coordinates are within the view, View found!
                         if (searchView == ivCell[row][col]) { //View found
-                            newView = searchView;
-                            checkIfOccupied(row, col);
+
+                            touchCol = col;
+                            touchRow = row;
+
+                            if(!lockGrid){
+                                checkIfOccupied(row, col);
+                                newView = searchView;
+                            }else{
+                                newTarget = (ImageView) searchView;
+                            }
                         }//if
                     }//if
                 }//for search View
@@ -294,28 +319,24 @@ public class GridBoard extends Activity implements OnTouchListener {
         // Update user selected coords each time a view on the grid is found.
         // To be used for playerAttack().
         // This seems to be the only place I can put this without causing app to crash.
-        touchCol = col;
-        touchRow = row;
 
         if (status == MotionStatus.DOWN) {
-            for (int i = 0; i < occupiedCells.size(); i++) {
-                if (occupiedCells.get(i).x == row && occupiedCells.get(i).y == col) {
-                    Point p = new Point(row, col);
-                    selectedShip = findWhichShip(p); //Touching View Updated
-                    setHit(true);
-                    Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
-                    break; // Exit loop when match found.
-                }
-            }
-            if (selectedShip == null) {
-                setHit(false);
-                Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
-            }
+            if(player){
 
-            // TODO Set target image in cell that the user clicks.
-            // If the user hasn't already clicked or hit/miss that cell.
-            if (!player) {
-                ivCell[touchRow][touchCol].setImageResource(R.drawable.target);
+                for (int i = 0; i < occupiedCells.size(); i++) {
+                    if (occupiedCells.get(i).x == row && occupiedCells.get(i).y == col) {
+                        Point p = new Point(row, col);
+                        selectedShip = findWhichShip(p); //Touching View Updated
+                        setHit(true);
+                        Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
+                        break; // Exit loop when match found.
+                    }
+                }
+                if (selectedShip == null) {
+                    setHit(false);
+                    Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
+                }
+
             }
 
         } else if (status == MotionStatus.MOVE) {//MotionStatus.MOVE
