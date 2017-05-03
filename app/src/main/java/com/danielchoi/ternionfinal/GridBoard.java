@@ -55,6 +55,7 @@ public class GridBoard extends Activity implements OnTouchListener {
     private Vector<String> aiAttacks = new Vector(); // Stores A.I. attacks in Vector to track previous hits
     SoundPool soundPool;
     private Set<Integer> soundsLoaded;
+    private boolean AIisAttacking;
 
     // Row/Col to be used for playerAttack().
     // Initialized to -1 since first cell on grid is 0,0
@@ -81,11 +82,11 @@ public class GridBoard extends Activity implements OnTouchListener {
         vb = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         linBoardGame = (LinearLayout) ((Activity) context).findViewById(boardID);
         gridContainer = (RelativeLayout) ((Activity) context).findViewById(R.id.gridContainer);
-        shipTV = (TextView) ((Activity) context).findViewById(R.id.textView);
+        shipTV = (TextView) ((Activity) context).findViewById(R.id.shipTV);
         linBoardGame.setOnTouchListener(this);
         sizeOfCell = Math.round(ScreenWidth() / (maxN + (1)));
         occupiedCells = new ArrayList<>();
-        // hit = false; This doesn't seem to be necessary now that there is a setter/getter.
+        hit = false;
         gridID = R.drawable.grid;
         if (!player ) lockGrid = true;
     }
@@ -297,7 +298,7 @@ public class GridBoard extends Activity implements OnTouchListener {
         touchCol = col;
         touchRow = row;
 
-        if (status == MotionStatus.DOWN) {
+        if (status == MotionStatus.DOWN || AIisAttacking) {
             for (int i = 0; i < occupiedCells.size(); i++) {
                 if (occupiedCells.get(i).x == row && occupiedCells.get(i).y == col) {
                     Point p = new Point(row, col);
@@ -349,6 +350,8 @@ public class GridBoard extends Activity implements OnTouchListener {
      */
     public void enemyAttack() {
         Log.i("enemyAttack", "Begins");
+        AIisAttacking = true;
+        setHit(false);
 
         // Loop until A.I. selects a cell it has not chosen before.
         int counter = 0;
@@ -391,7 +394,7 @@ public class GridBoard extends Activity implements OnTouchListener {
             ivCell[myRow][myCol].setImageResource(R.drawable.crater);
             Log.i("AI getHit", "" + getHit() + ", (" + myRow + ", " + myCol + ")");
         }
-
+        AIisAttacking = false;
         Log.i("enemyAttack", "Ends");
     }
 
