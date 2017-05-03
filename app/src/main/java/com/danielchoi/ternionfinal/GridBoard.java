@@ -267,7 +267,11 @@ public class GridBoard extends Activity implements OnTouchListener {
             Log.i("playerAttack()", "Miss :(");
         }
 
+        newTarget.setBackgroundResource(gridID);
+        newTarget = null;
+
         // TODO transition back to enemy grid
+        // Save player selections
 
         // Reset player's selection.
         touchRow = -1;
@@ -300,6 +304,7 @@ public class GridBoard extends Activity implements OnTouchListener {
                                 checkIfOccupied(row, col);
                                 newView = searchView;
                             }else{
+                                checkIfOccupied(row, col);
                                 newTarget = (ImageView) searchView;
                             }
                         }//if
