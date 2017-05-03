@@ -153,7 +153,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         battleButton = (ImageView) findViewById(R.id.battleIB);
         fireButton = (ImageView) findViewById(R.id.fireIB);
         layout = findViewById(R.id.activity_game);
-        shipName = findViewById(R.id.textView);
+        shipName = findViewById(R.id.shipTV);
         cellCount = 8;
     }
 
@@ -200,7 +200,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         layout.setPadding(i, i, i, i);
         transition = (TransitionDrawable) findViewById(R.id.activity_game).getBackground();
         transition.reverseTransition(750);
-        shipName.setVisibility(View.GONE);//Temp reference
+        shipName.setVisibility(View.VISIBLE);//Temp reference
         battleButton.setVisibility(View.VISIBLE);
         fireButton.setVisibility(View.GONE);
         battleButton.setOnClickListener(this);
@@ -252,6 +252,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
             enemyGrid.showGrid();
             playerGrid.hideGrid();
             playerGrid.setLockGrid(true);
+
         } else if (view.getId() == R.id.fireIB) {
             if (enemyGrid.touchRow != -1 && enemyGrid.touchCol != -1) {
                 enemyPhase();

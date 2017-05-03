@@ -85,19 +85,9 @@ public class GridBoard extends Activity implements OnTouchListener {
         linBoardGame.setOnTouchListener(this);
         sizeOfCell = Math.round(ScreenWidth() / (maxN + (1)));
         occupiedCells = new ArrayList<>();
-        moved = false;
         // hit = false; This doesn't seem to be necessary now that there is a setter/getter.
         gridID = R.drawable.grid;
-
-        // Determine if grid should be locked or not.
-        // Grid Locked if this is NOT the player
-        // OR
-        // If the Battle button in GameActivity has been clicked.
-        if (!player || getLockGrid()) {
-            setLockGrid(true);
-        } else {
-            setLockGrid(false);
-        }
+        if (!player ) lockGrid = true;
     }
 
     /**
@@ -206,19 +196,15 @@ public class GridBoard extends Activity implements OnTouchListener {
                     status = MotionStatus.DOWN;
                     selectedShip = null;
                     findViewHelper(touchX, touchY);
-                    if (selectedShip != null) {
-                        shipTV.setText(selectedShip.getShipName());
-                    }
+                    if (selectedShip != null) {shipTV.setText(selectedShip.getShipName());}
+
                     break;
                 case MotionEvent.ACTION_MOVE:
                     status = MotionStatus.MOVE;
-                    if (!getLockGrid()) {
+                    if (!lockGrid) {
                         if (newView != null) lastView = newView;
                         findViewHelper(touchX, touchY);
                         if (selectedShip != null && newView != lastView) {
-                            //TODO: Need to try to handle this so that it only fires if ship ACTUALLY moves.
-                            //Not priority but will help us with resources and allow us to use vibrate and sounds
-                            //And so that it doesn't do unnecessary loops and clears.
                             vb.vibrate(10);
                             playClick(soundID);
                             Log.i("Clearing and reset", "!");
@@ -354,7 +340,7 @@ public class GridBoard extends Activity implements OnTouchListener {
                     }
                 }//for
             }
-        }
+        }//Move
     }
 
     /**
