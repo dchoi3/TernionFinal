@@ -252,7 +252,6 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
             enemyGrid.showGrid();
             playerGrid.hideGrid();
             playerGrid.setLockGrid(true);
-
         } else if (view.getId() == R.id.fireIB) {
             if (enemyGrid.touchRow != -1 && enemyGrid.touchCol != -1) {
                 enemyPhase();
