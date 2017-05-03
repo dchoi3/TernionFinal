@@ -321,23 +321,22 @@ public class GridBoard extends Activity implements OnTouchListener {
         // This seems to be the only place I can put this without causing app to crash.
 
         if (status == MotionStatus.DOWN) {
-            if(player){
-
-                for (int i = 0; i < occupiedCells.size(); i++) {
-                    if (occupiedCells.get(i).x == row && occupiedCells.get(i).y == col) {
-                        Point p = new Point(row, col);
-                        selectedShip = findWhichShip(p); //Touching View Updated
-                        setHit(true);
-                        Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
-                        break; // Exit loop when match found.
-                    }
-                }
-                if (selectedShip == null) {
-                    setHit(false);
+          
+            for (int i = 0; i < occupiedCells.size(); i++) {
+                if (occupiedCells.get(i).x == row && occupiedCells.get(i).y == col) {
+                    Point p = new Point(row, col);
+                    selectedShip = findWhichShip(p); //Touching View Updated
+                    setHit(true);
                     Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
+                    break; // Exit loop when match found.
                 }
-
             }
+            if (selectedShip == null) {
+                setHit(false);
+                Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
+            }
+
+
 
         } else if (status == MotionStatus.MOVE) {//MotionStatus.MOVE
             if (selectedShip != null) {//Need to make sure none of the current ship parts will overlap another.
