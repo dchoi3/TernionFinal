@@ -195,7 +195,7 @@ public class GridBoard extends Activity implements OnTouchListener {
                     selectedShip = null;
                     findViewHelper(touchX, touchY);
                     if (selectedShip != null) {shipTV.setText(selectedShip.getShipName());}
-                    if(lockGrid){ //Means we are done with setup Phase
+                    if(lockGrid && !player){ //Means we are done with setup Phase
                         if(lastTarget != null){
                             lastTarget.setBackgroundResource(gridID);
                             newTarget.setBackgroundResource(R.drawable.target);
@@ -219,7 +219,7 @@ public class GridBoard extends Activity implements OnTouchListener {
                             occupiedCells.clear();
                             setShips();
                         }
-                    }else{
+                    }else if (!player){
                         if(newTarget != null) lastTarget = newTarget;
 
                         findViewHelper(touchX, touchY);
