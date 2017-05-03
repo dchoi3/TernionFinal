@@ -50,6 +50,7 @@ public class GridBoard extends Activity implements OnTouchListener {
     private Vector<String> aiAttacks = new Vector<>(); // Stores A.I. attacks in Vector to track previous hits
     SoundPool soundPool;
     private Set<Integer> soundsLoaded;
+    private boolean AIisAttacking;
 
     // Row/Col to be used for playerAttack().
     // Initialized to -1 since first cell on grid is 0,0
@@ -80,7 +81,7 @@ public class GridBoard extends Activity implements OnTouchListener {
         linBoardGame.setOnTouchListener(this);
         sizeOfCell = Math.round(ScreenWidth() / (maxN + (1)));
         occupiedCells = new ArrayList<>();
-        // hit = false; This doesn't seem to be necessary now that there is a setter/getter.
+        hit = false;
         gridID = R.drawable.grid;
         if (!player ) lockGrid = true;
     }
@@ -320,7 +321,7 @@ public class GridBoard extends Activity implements OnTouchListener {
         // To be used for playerAttack().
         // This seems to be the only place I can put this without causing app to crash.
 
-        if (status == MotionStatus.DOWN) {
+        if (status == MotionStatus.DOWN  || AIisAttacking) {
             if(player){
 
                 for (int i = 0; i < occupiedCells.size(); i++) {
@@ -370,6 +371,8 @@ public class GridBoard extends Activity implements OnTouchListener {
      */
     public void enemyAttack() {
         Log.i("enemyAttack", "Begins");
+        AIisAttacking = true;
+        setHit(false);
 
         // Loop until A.I. selects a cell it has not chosen before.
         int counter = 0;
@@ -412,7 +415,7 @@ public class GridBoard extends Activity implements OnTouchListener {
             ivCell[myRow][myCol].setImageResource(R.drawable.crater);
             Log.i("AI getHit", "" + getHit() + ", (" + myRow + ", " + myCol + ")");
         }
-
+        AIisAttacking = false;
         Log.i("enemyAttack", "Ends");
     }
 
