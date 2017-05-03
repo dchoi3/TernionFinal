@@ -30,19 +30,15 @@ import java.util.Set;
 import java.util.Timer;
 
 public class GameActivity extends AppCompatActivity implements View.OnClickListener, PopupMenu.OnMenuItemClickListener {
-    // Variables
+
     public Vibrator vb;
     public static final int activityRef = 2000;
     private int score = 0, count = 0, soundID[], cellCount;
     private GridBoard playerGrid, enemyGrid;
-    private boolean playersTurn;
     private Set<Integer> soundsLoaded;
     private TransitionDrawable transition;
-
     private enum GAMEPHASE {INTRO_PHASE, SETUP_PHASE, PLAYER_PHASE, ENEMY_PHASE, GAMEOVER_PHASE}
-
     public GAMEPHASE gamephase;
-    public GamePhase playerGP, enemyGP;
     View layout, shipName;
     ImageView battleButton, alertView, fireButton;
     InvasionThread invasion;
@@ -96,8 +92,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
     /**
      * This method will be used to load up previous gamestates
      */
-    private void loadSaveState() {
-    }
+    private void loadSaveState() {}
 
     /**
      * This directs the game to the proper phase when returning to the game
@@ -223,10 +218,10 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
      */
     private void playerPhase() {
         gamephase = GAMEPHASE.PLAYER_PHASE;
-        playersTurn = true;
         fireButton.setVisibility(View.VISIBLE);
-        playerGP = new GamePhase(this, playerGrid.getShipsPosition(), playerGrid.getShips());
+        playerGrid.setLockGrid(true);
         if (enemyGrid == null) enemyGrid = new GridBoard(this, R.id.enemyGrid, false, cellCount);
+        else enemyGrid.showGrid();
     }
 
     /**
@@ -234,9 +229,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
      */
     private void enemyPhase() {
         gamephase = GAMEPHASE.ENEMY_PHASE;
-        playersTurn = false;
         battleButton.setVisibility(View.VISIBLE);
-        enemyGP = new GamePhase(this, enemyGrid.getShipsPosition(), enemyGrid.getShips());
         playerGrid.enemyAttack();
     }
 
@@ -246,12 +239,8 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
 
         if (view.getId() == R.id.battleIB) {
             transition.reverseTransition(750);
-            battleButton.setVisibility(View.GONE);
             clearSetUpPhase();
             playerPhase();
-            enemyGrid.showGrid();
-            playerGrid.hideGrid();
-            playerGrid.setLockGrid(true);
         } else if (view.getId() == R.id.fireIB) {
             if (enemyGrid.touchRow != -1 && enemyGrid.touchCol != -1) {
                 enemyPhase();
@@ -359,7 +348,6 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
             gamephase = GAMEPHASE.INTRO_PHASE; //Temp to reset game. It should be in the GAMEOVER_PHASE
             if (playerGrid != null) {
                 if (playerGrid.getHit()) score = score + 2000;
-                Log.i("Test High Score", "-----");
                 Intent scoreIntent = new Intent(getApplicationContext(), ScoreActivity.class);
                 scoreIntent.putExtra("score", score);
                 scoreIntent.putExtra("calling-Activity", activityRef);
