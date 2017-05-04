@@ -34,9 +34,11 @@ public class GridBoard extends Activity implements OnTouchListener {
     private Context context;
     final static int maxN = 8;
     private boolean player, hit, lockGrid;
-    private Ship ships[], selectedShip;
+    private Ship selectedShip;
     private RelativeLayout gridContainer;
     private ArrayList<Point> occupiedCells, playerAttacks;
+    private ArrayList<Ship> ships;
+   
     private int boardID, sizeOfCell, margin, gridID, soundID;
     private enum MotionStatus {DOWN, MOVE, UP}
     private MotionStatus status;
@@ -46,7 +48,8 @@ public class GridBoard extends Activity implements OnTouchListener {
     private ImageView[][] ivCell = new ImageView[maxN][maxN];
     private TextView shipTV;
     private View lastView, newView;
-    private ImageView lastTarget, newTarget;
+    private ImageView lastTarget;
+    public ImageView newTarget;
     private Vector<String> aiAttacks = new Vector<>(); // Stores A.I. attacks in Vector to track previous hits
     SoundPool soundPool;
     private Set<Integer> soundsLoaded;
@@ -86,6 +89,7 @@ public class GridBoard extends Activity implements OnTouchListener {
         hit = false;
         gridID = R.drawable.grid;
         if (!player ) lockGrid = true;
+        ships = new ArrayList<>();
     }
 
     /**
@@ -122,20 +126,109 @@ public class GridBoard extends Activity implements OnTouchListener {
         //context,size, headLocation, bodyLocations
         Point point;
         Ship scout_One, scout_Two, cruiser, carrier, motherShip;
-        point = new Point(maxN - 1, 0); //row, cell
-        scout_One = new Ship(1, point, maxN, "Scout One", player);
-        point = new Point(maxN - 1, 1);
-        scout_Two = new Ship(1, point, maxN, "Scout Two", player);
-        point = new Point(maxN - 2, 2);
-        cruiser = new Ship(2, point, maxN, "Cruiser", player);
-        point = new Point(maxN - 2, 3);
-        carrier = new Ship(4, point, maxN, "Carrier", player);
-        point = new Point(maxN - 4, 5);
-        motherShip = new Ship(12, point, maxN, "MotherShip", player);
+        if(player) {
+            point = new Point(maxN - 1, 0); //row, cell
+            scout_One = new Ship(1, point, maxN, "Scout One", player);
+            ships.add(scout_One);
+            point = new Point(maxN - 1, 1);
+            scout_Two = new Ship(1, point, maxN, "Scout Two", player);
+            ships.add(scout_Two);
+            point = new Point(maxN - 2, 2);
+            cruiser = new Ship(2, point, maxN, "Cruiser", player);
+            ships.add(cruiser);
+            point = new Point(maxN - 2, 3);
+            carrier = new Ship(4, point, maxN, "Carrier", player);
+            ships.add(carrier);
+            point = new Point(maxN - 4, 5);
+            motherShip = new Ship(12, point, maxN, "MotherShip", player);
+            ships.add(motherShip);
 
+        }else{
+            Random rand = new Random();
+            int rowM  = maxN-3;
+            int colM = maxN -2;
+            int row = rand.nextInt(rowM);
+            int col = rand.nextInt(colM);
+            point = new Point(row, col);
+            motherShip = new Ship(12, point, maxN, "MotherShip", player);
+            updateOccupiedCells(motherShip.getBodyLocationPoints());
+            ships.add(motherShip);
+
+            rowM = maxN - 1;
+            colM = maxN -1;
+            row = rand.nextInt(rowM);
+            col = rand.nextInt(colM);
+            point = new Point(row, col);
+            carrier = new Ship(4, point, maxN, "Carrier", player);
+            updateOccupiedCells(carrier.getBodyLocationPoints());
+            ships.add(carrier);
+            checkIfOccupiedForSetShip(carrier, row, col, rowM, colM);
+
+
+            rowM = maxN - 1;
+            colM = maxN;
+            row = rand.nextInt(rowM);
+            col = rand.nextInt(colM);
+            point = new Point(row, col);
+            cruiser = new Ship(2, point, maxN, "Cruiser", player);
+            updateOccupiedCells(cruiser.getBodyLocationPoints());
+            ships.add(cruiser);
+            checkIfOccupiedForSetShip(cruiser, row, col, rowM, colM);
+
+
+            rowM = maxN;
+            colM = maxN;
+            row = rand.nextInt(rowM);
+            col = rand.nextInt(colM);
+            point = new Point(row, col);
+            scout_Two = new Ship(1, point, maxN, "Scout_Two", player);
+            updateOccupiedCells(scout_Two.getBodyLocationPoints());
+            ships.add(scout_Two);
+            checkIfOccupiedForSetShip(scout_Two, row, col, rowM, colM);
+
+            rowM = maxN;
+            colM = maxN;
+            row = rand.nextInt(rowM);
+            col = rand.nextInt(colM);
+            point = new Point(row, col);
+            scout_One = new Ship(1, point, maxN, "Scout_One", player);
+            updateOccupiedCells(scout_One.getBodyLocationPoints());
+            ships.add(scout_One);
+            checkIfOccupiedForSetShip(scout_One, row, col, rowM, colM);
+
+
+
+
+        }
         //Need an algorithm to set enemy ship locations at random without overlaps
+    }
 
-        ships = new Ship[]{scout_One, scout_Two, cruiser, carrier, motherShip};
+    private void checkIfOccupiedForSetShip(Ship ship, int row, int col, int rowM, int colM) {
+        Random rand = new Random();
+        int tempRow, tempCol;
+        ship.moveShipTo(row, col);
+        for (Ship s : ships) {
+
+            if (s != ship){
+                for (int i = 0; i < ship.getShipSize(); i++) {
+                    tempRow = ship.getBodyLocationPoints()[i].x;
+                    tempCol = ship.getBodyLocationPoints()[i].y;
+
+                    for (int j = 0; j < s.getShipSize(); j++) {
+                        if (tempRow == s.getBodyLocationPoints()[j].x && tempCol == s.getBodyLocationPoints()[j].y) {
+
+                            row = rand.nextInt(rowM);
+                            col = rand.nextInt(colM);
+                            ship.moveShipTo(row, col);
+                            checkIfOccupiedForSetShip(ship, row, col, rowM, colM);
+
+                        }
+                    }//for
+                }//for
+            }
+        }//for
+
+
     }
 
     /**
@@ -149,12 +242,14 @@ public class GridBoard extends Activity implements OnTouchListener {
                 ivCell[x][y].setBackgroundResource(gridID);
             }
         }
+
         for (Ship s : ships) {
             for (int i = 0; i < s.getShipSize(); i++) {
-                ivCell[s.getBodyLocationPoints()[i].x][s.getBodyLocationPoints()[i].y].setBackgroundResource(s.getBodyResources()[i]);
+                if(player)ivCell[s.getBodyLocationPoints()[i].x][s.getBodyLocationPoints()[i].y].setBackgroundResource(s.getBodyResources()[i]);
                 updateOccupiedCells(s.getBodyLocationPoints());
             }
         }
+
     }
 
     /**
@@ -195,15 +290,13 @@ public class GridBoard extends Activity implements OnTouchListener {
                 case MotionEvent.ACTION_DOWN:
                     status = MotionStatus.DOWN;
                     selectedShip = null;
+                    if(newTarget != null) lastTarget = newTarget;
                     findViewHelper(touchX, touchY);
                     if (selectedShip != null) {shipTV.setText(selectedShip.getShipName());}
                     if(lockGrid && !player && newTarget != null){ //Means we are done with setup Phase
-                        if(lastTarget != null){
-                            lastTarget.setBackgroundResource(gridID);
-                            newTarget.setBackgroundResource(R.drawable.target);
-                        }else{
-                            newTarget.setBackgroundResource(R.drawable.target);
-                        }
+
+                        if(lastTarget != null) {lastTarget.setBackgroundResource(gridID);}
+                        newTarget.setBackgroundResource(R.drawable.target);
                     }
                     break;
                 case MotionEvent.ACTION_MOVE:
@@ -222,7 +315,7 @@ public class GridBoard extends Activity implements OnTouchListener {
                     }else if (!player){
                         if(newTarget != null) lastTarget = newTarget;
                         findViewHelper(touchX, touchY);
-                        if(newTarget != null){
+                        if(newTarget != null && lastTarget != null){
                             lastTarget.setBackgroundResource(gridID);
                             newTarget.setBackgroundResource(R.drawable.target);
                         }
@@ -265,6 +358,7 @@ public class GridBoard extends Activity implements OnTouchListener {
         }
 
         newTarget.setBackgroundResource(gridID);
+        lastTarget = null;
         newTarget = null;
 
         // TODO transition back to enemy grid
@@ -333,15 +427,17 @@ public class GridBoard extends Activity implements OnTouchListener {
                 if (occupiedCells.get(i).x == row && occupiedCells.get(i).y == col) {
                     Point p = new Point(row, col);
                     selectedShip = findWhichShip(p); //Touching View Updated
-                    setHit(true);
                     Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
-                    break; // Exit loop when match found.
+                    setHit(true);
+                    break;
                 }
             }
+
             if (selectedShip == null) {
                 setHit(false);
                 Log.i("checkIfOccupied getHit", "" + getHit() + ", (" + row + ", " + col + ")");
             }
+
         } else if (status == MotionStatus.MOVE) {//MotionStatus.MOVE
             if (selectedShip != null) {//Need to make sure none of the current ship parts will overlap another.
                 int rowHolder = selectedShip.getHeadCoordinatePoint().x;
@@ -381,14 +477,16 @@ public class GridBoard extends Activity implements OnTouchListener {
         int myRow = 0, myCol = 0;
         boolean selectionFound = false;
         String aiSelectedHit = "Empty";
-        while (selectionFound == true || counter < aiAttacks.size()) {
+        Random newRow, newCol;
+
+        while (selectionFound || counter < aiAttacks.size()) {
             selectionFound = false;
             // Select random row and col
-            Random newRow = new Random();
+            newRow = new Random();
             myRow = newRow.nextInt(maxN);
-            Random newCol = new Random();
+            newCol = new Random();
             myCol = newCol.nextInt(maxN);
-            Log.i("_-_-_-_", "aiRandomHit call " + counter);
+
             aiSelectedHit = myRow + ", " + myCol;
 
             while (counter < aiAttacks.size()) {
@@ -402,11 +500,6 @@ public class GridBoard extends Activity implements OnTouchListener {
             }
         }
         aiAttacks.add(aiSelectedHit);
-
-        // TODO I think this is just for testing?
-//        for (int i = 0; i < aiAttacks.size(); i++) {
-//            Log.i("AI hits coordinate: ", aiAttacks.get(i));
-//        }
 
         checkIfOccupied(myRow, myCol);
 
@@ -497,10 +590,6 @@ public class GridBoard extends Activity implements OnTouchListener {
 
     public int getMarginSize() {
         return margin;
-    }
-
-    public Ship[] getShips() {
-        return ships;
     }
 
     public ArrayList<Point> getShipsPosition() {

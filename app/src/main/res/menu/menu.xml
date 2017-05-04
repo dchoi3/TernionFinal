@@ -5,9 +5,6 @@
     <item android:title="Quit"
         android:id="@+id/actionQuit"
         />
-    <item android:title="AI Fire!"
-        android:id="@+id/actionAI"
-        />
 
     <item android:title="HighScore"
         android:id="@+id/highScore"
