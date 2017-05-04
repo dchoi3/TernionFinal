@@ -230,6 +230,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         playerGrid.setLockGrid(true);
         if (enemyGrid == null) enemyGrid = new GridBoard(this, R.id.enemyGrid, false, cellCount);
         else enemyGrid.showGrid();
+        playerGrid.hideGrid();
     }
 
     /**
@@ -252,8 +253,6 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
             transition.reverseTransition(750);
             clearSetUpPhase();
             playerPhase();
-
-
         } else if (view.getId() == R.id.fireIB) {
             if (enemyGrid.newTarget != null) {
                 enemyGrid.playerAttack(enemyGrid.touchRow, enemyGrid.touchCol);
